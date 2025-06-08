@@ -1,8 +1,9 @@
-
-<html lang="en">
+<!DOCTYPE html>
+<html lang="pl">
 <head>
     <title>EHHH</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js"></script>
     <style>
         body {
@@ -18,12 +19,18 @@
         }
 
         #flash-game {
-            width: 800px;
-            height: 600px;
+            width: 100%;
+            max-width: 1000px;
+            aspect-ratio: 4 / 3;
             display: none;
-            display: flex;
             justify-content: center;
             align-items: center;
+            background: #000;
+        }
+
+        #flash-game ruffle-player {
+            width: 100%;
+            height: 100%;
         }
 
         #loading-screen {
@@ -42,6 +49,7 @@
 
         #progress-bar {
             width: 250px;
+            max-width: 80%;
             height: 25px;
             background: #222;
             border: 2px solid #fff;
@@ -51,7 +59,7 @@
         }
 
         #progress-fill {
-            width: 0;
+            width: 0%;
             height: 100%;
             background: #fff;
             transition: width 0.5s ease-in-out;
@@ -72,6 +80,7 @@
         </div>
     </div>
     <div id="flash-game"></div>
+
     <script>
         window.addEventListener('load', () => {
             const loadingScreen = document.getElementById("loading-screen");
@@ -80,45 +89,68 @@
 
             const initializeRuffle = () => {
                 const ruffle = window.RufflePlayer?.newest?.();
-                if (!ruffle) return;
+                if (!ruffle) {
+                    console.error("Ruffle Player not loaded. Please try again later.");
+                    return;
+                }
 
                 const player = ruffle.createPlayer();
                 gameContainer.appendChild(player);
 
+                // Progress bar animation
                 let progress = 0;
-                const updateProgress = () => {
-                    progress = Math.min(progress + 1.5, 100);
-                    progressFill.style.width = `${progress}%`;
-                    if (progress < 100) {
-                        setTimeout(updateProgress, 80);
+                const progressStep = 0.5; // smaller steps = smoother fill
+                const fillProgressBar = () => {
+                    if (progress < 95) {
+                        progress += progressStep;
+                        progressFill.style.width = `${progress}%`;
+                        requestAnimationFrame(fillProgressBar);
                     }
                 };
-                updateProgress();
+                fillProgressBar();
 
-                player.load("https://github.com/XNOTHING0X/EH/raw/X/0.swf")
+                // Load SWF
+                player.load("https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf")
                     .then(() => {
+                        progress = 100;
                         progressFill.style.width = "100%";
                         setTimeout(() => {
                             loadingScreen.style.display = "none";
                             gameContainer.style.display = "flex";
                         }, 600);
+                    })
+                    .catch((error) => {
+                        console.error("Failed to load SWF:", error);
                     });
             };
 
-            if (!window.RufflePlayer) {
-                const script = document.createElement("script");
-                script.src = "https://github.com/XNOTHING0X/EH/raw/X/0.swf";
-                script.onload = initializeRuffle;
-                document.head.appendChild(script);
-            } else {
-                initializeRuffle();
-            }
+            initializeRuffle();
 
             window.addEventListener('beforeunload', () => {
                 gameContainer.style.display = "none";
                 loadingScreen.style.display = "flex";
                 progressFill.style.width = "0%";
             });
+
+            // Resize logic to maintain 4:3 ratio
+            const resizeGame = () => {
+                const aspectRatio = 4 / 3;
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                let gameWidth = windowWidth;
+                let gameHeight = windowWidth / aspectRatio;
+
+                if (gameHeight > windowHeight) {
+                    gameHeight = windowHeight;
+                    gameWidth = windowHeight * aspectRatio;
+                }
+
+                gameContainer.style.width = `${gameWidth}px`;
+                gameContainer.style.height = `${gameHeight}px`;
+            };
+
+            window.addEventListener('resize', resizeGame);
+            resizeGame();
         });
     </script>
 </body>
