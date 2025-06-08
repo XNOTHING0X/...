@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Vagina Simulater</title>
+    <meta charset="utf-8">
+    <script src="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js"></script>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #flash-game {
+            width: 800px;
+            height: 600px;
+            display: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            flex-direction: column;
+        }
+
+        #progress-bar {
+            width: 250px;
+            height: 25px;
+            background: #222;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #progress-fill {
+            width: 0;
+            height: 100%;
+            background: #fff;
+            transition: width 0.5s ease-in-out;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+    </div>
+    <div id="flash-game"></div>
+    <script>
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById("loading-screen");
+            const gameContainer = document.getElementById("flash-game");
+            const progressFill = document.getElementById("progress-fill");
+
+            const initializeRuffle = () => {
+                const ruffle = window.RufflePlayer?.newest?.();
+                if (!ruffle) return;
+
+                const player = ruffle.createPlayer();
+                gameContainer.appendChild(player);
+
+                let progress = 0;
+                const updateProgress = () => {
+                    progress = Math.min(progress + 1.5, 100);
+                    progressFill.style.width = `${progress}%`;
+                    if (progress < 100) {
+                        setTimeout(updateProgress, 80);
+                    }
+                };
+                updateProgress();
+
+                player.load("https://comdotcdn.com/4x90xhl3k0/games/files/0f2f6549a15145ee150e1b5958251d56.swf")
+                    .then(() => {
+                        progressFill.style.width = "100%";
+                        setTimeout(() => {
+                            loadingScreen.style.display = "none";
+                            gameContainer.style.display = "flex";
+                        }, 600);
+                    });
+            };
+
+            if (!window.RufflePlayer) {
+                const script = document.createElement("script");
+                script.src = "https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle/ruffle.js";
+                script.onload = initializeRuffle;
+                document.head.appendChild(script);
+            } else {
+                initializeRuffle();
+            }
+
+            window.addEventListener('beforeunload', () => {
+                gameContainer.style.display = "none";
+                loadingScreen.style.display = "flex";
+                progressFill.style.width = "0%";
+            });
+        });
+    </script>
+</body>
+</html>
