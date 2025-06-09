@@ -1,146 +1,91 @@
-<!DOCTYPE html>
-<html lang="pl">
+
 <head>
-    <title>EHHH</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js"></script>
-    <style>
-        body {
-            margin: 0;
-            background: #000;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>YT</title>
+  <!-- Preload Ruffle i pliku SWF -->
+  <link rel="preload" href="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js" as="script">
+  <link rel="preload" href="https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf" as="fetch" crossorigin="anonymous">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      touch-action: none; /* Zapobiega domyślnym gestom przeglądarki */
+      user-select: none; /* Zapobiega zaznaczaniu tekstu */
+    }
 
-        #flash-game {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            display: none;
-            background: #000;
-        }
+    #game {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      contain: strict; /* Ogranicza layout i paint do kontenera */
+      image-rendering: pixelated; /* Zachowuje styl pikselowy */
+      transform: translateZ(0); /* Wymuszenie akceleracji GPU */
+      will-change: transform; /* Przygotowanie do zmian transformacji */
+    }
 
-        #flash-game ruffle-player {
-            width: 100%;
-            height: 100%;
-        }
-
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2;
-            flex-direction: column;
-        }
-
-        #progress-bar {
-            width: 250px;
-            max-width: 80%;
-            height: 25px;
-            background: #222;
-            border: 2px solid #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        #progress-fill {
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            transition: width 0.5s ease-in-out;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-    </style>
+    ruffle-player {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+  </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div id="progress-bar">
-            <div id="progress-fill"></div>
-        </div>
-    </div>
-    <div id="flash-game"></div>
+  <div id="game"></div>
+  <script src="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js" async></script>
+  <script>
+    // Uruchom po załadowaniu strony
+    window.addEventListener("load", () => {
+      const container = document.getElementById("game");
 
-    <script>
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById("loading-screen");
-            const gameContainer = document.getElementById("flash-game");
-            const progressFill = document.getElementById("progress-fill");
+      // Blokada menu kontekstowego
+      window.addEventListener("contextmenu", e => e.preventDefault(), { passive: true });
 
-            // Disable right-click context menu globally
-            window.addEventListener('contextmenu', (e) => e.preventDefault());
+      // Sprawdzenie dostępności Ruffle
+      const ruffle = window.RufflePlayer?.newest?.();
+      if (!ruffle) {
+        console.error("Ruffle nie jest dostępny.");
+        return;
+      }
 
-            const initializeRuffle = () => {
-                const ruffle = window.RufflePlayer?.newest?.();
-                if (!ruffle) {
-                    console.error("Ruffle Player not loaded. Please try again later.");
-                    return;
-                }
+      // Konfiguracja Ruffle dla maksymalnej wydajności
+      ruffle.config = {
+        letterbox: "off", // Brak czarnych pasków
+        showSwfDownload: false, // Wyłączenie opcji pobierania SWF
+        unmuteOverlay: false, // Wyłączenie nakładki wyciszenia
+        rightClickMenu: false, // Wyłączenie menu prawego przycisku
+        scaleMode: "exactFit", // Dopasowanie do ekranu
+        wmode: "direct", // Użycie akceleracji GPU
+        favorPerformance: true, // Priorytet wydajności
+        quality: "low", // Niska jakość dla lepszej wydajności
+        frameRate: 0, // Dynamiczna liczba klatek
+        polyfills: false, // Wyłączenie niepotrzebnych polyfilli
+        logLevel: "error" // Minimalne logowanie
+      };
 
-                // Configure Ruffle options
-                ruffle.config = {
-                    letterbox: "off",         // Stretch to fill the container
-                    showSwfDownload: false,   // Hide Ruffle's SWF download button
-                    unmuteOverlay: false,     // Hide unmute overlay
-                    rightClickMenu: false     // Disable Ruffle's right-click menu
-                };
+      // Tworzenie odtwarzacza
+      const player = ruffle.createPlayer();
+      container.appendChild(player);
 
-                const player = ruffle.createPlayer();
-                gameContainer.appendChild(player);
+      // Ładowanie pliku SWF z buforowaniem
+      const swfUrl = "https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf";
+      player.load(swfUrl, { cache: "force-cache" }).catch(err => {
+        console.error("Błąd ładowania SWF:", err);
+      });
 
-                // Animate progress bar
-                let progress = 0;
-                const progressStep = 0.5;
-                const fillProgressBar = () => {
-                    if (progress < 95) {
-                        progress += progressStep;
-                        progressFill.style.width = `${progress}%`;
-                        requestAnimationFrame(fillProgressBar);
-                    }
-                };
-                fillProgressBar();
-
-                // Load SWF
-                player.load("https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf")
-                    .then(() => {
-                        progress = 100;
-                        progressFill.style.width = "100%";
-                        setTimeout(() => {
-                            loadingScreen.style.display = "none";
-                            gameContainer.style.display = "flex";
-                        }, 600);
-                    })
-                    .catch((error) => {
-                        console.error("Failed to load SWF:", error);
-                    });
-            };
-
-            initializeRuffle();
-
-            window.addEventListener('beforeunload', () => {
-                gameContainer.style.display = "none";
-                loadingScreen.style.display = "flex";
-                progressFill.style.width = "0%";
-            });
-        });
-    </script>
+      // Optymalizacja dla urządzeń mobilnych
+      if ("ontouchstart" in window) {
+        player.style.touchAction = "none"; // Zapobiega domyślnym gestom
+      }
+    }, { once: true }); // Wykonaj tylko raz
+  </script>
 </body>
 </html>
