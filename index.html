@@ -5,7 +5,7 @@
   <title>YT</title>
   <!-- Preload Ruffle i pliku SWF -->
   <link rel="preload" href="https://unpkg.com/@ruffle-rs/ruffle/ruffle.js" as="script">
-  <link rel="preload" href="https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="https://github.com/XNOTHING0X/III/raw/refs/heads/III/III.swf" as="fetch" crossorigin="anonymous">
   <style>
     html, body {
       margin: 0;
@@ -76,7 +76,7 @@
       container.appendChild(player);
 
       // Ładowanie pliku SWF z buforowaniem
-      const swfUrl = "https://raw.githubusercontent.com/XNOTHING0X/EH/X/0.swf";
+      const swfUrl = "https://github.com/XNOTHING0X/III/raw/refs/heads/III/III.swf";
       player.load(swfUrl, { cache: "force-cache" }).catch(err => {
         console.error("Błąd ładowania SWF:", err);
       });
